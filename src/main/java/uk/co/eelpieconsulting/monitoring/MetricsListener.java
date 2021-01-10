@@ -13,75 +13,74 @@ import java.util.List;
 
 @Component
 public class MetricsListener {
-	
-	private final static Logger log = Logger.getLogger(MetricsListener.class);
-	
-	private final MqttConnectionFactory mqttConnectionFactory;
-	
-	@Autowired
-	public MetricsListener(MqttConnectionFactory mqttConnectionFactory, MetricsDAO metricsDAO) throws Exception {
-		
-		this.mqttConnectionFactory = mqttConnectionFactory;
-		new Thread(new Listener(metricsDAO)).start();
-	}
 
-	private class Listener implements Runnable {
-		
-		private final MetricsDAO metricsDAO;
+    private final static Logger log = Logger.getLogger(MetricsListener.class);
 
-		public Listener(MetricsDAO metricsDAO) {
-			this.metricsDAO = metricsDAO;
-		}
+    private final MqttConnectionFactory mqttConnectionFactory;
 
-		@Override
-		public void run() {
-			try {
-				log.info("Starting metrics listener");
-		        final BlockingConnection connection = mqttConnectionFactory.subscribeToMetricsTopic();
-		        while (true) {
-		        	processNextMessageFrom(connection);
-		        }
-		        
-			} catch (Exception e) {
-				log.error(e);
-			}
-		}
+    @Autowired
+    public MetricsListener(MqttConnectionFactory mqttConnectionFactory, MetricsDAO metricsDAO) {
+        this.mqttConnectionFactory = mqttConnectionFactory;
+        new Thread(new Listener(metricsDAO)).start();
+    }
 
-		private void processNextMessageFrom(BlockingConnection connection) {
-			try {
-				Message message = connection.receive();
-	        	byte[] payload = message.getPayload();
-	        			        	
-	        	String metricMessage = new String(payload, "UTF-8");
-	        	log.debug("Got metric message: " + metricMessage);
-	        	String[] fields = metricMessage.replaceAll("\r", "").replaceAll("\n", "").split(":");
-	        	String newValue = fields[1];
+    private class Listener implements Runnable {
 
-				String metricName = fields[0];
-				Metric existing = metricsDAO.getByName(metricName);
+        private final MetricsDAO metricsDAO;
 
-				String existingValue = existing != null ? existing.getLastValue(): null;
+        public Listener(MetricsDAO metricsDAO) {
+            this.metricsDAO = metricsDAO;
+        }
 
-				boolean hasChanged = !(newValue.equals(existingValue));
+        @Override
+        public void run() {
+            try {
+                log.info("Starting metrics listener");
+                final BlockingConnection connection = mqttConnectionFactory.subscribeToMetricsTopic();
+                while (true) {
+                    processNextMessageFrom(connection);
+                }
 
-				List<DateTime> changes = existing != null ? existing.getChanges() : Lists.newArrayList();
-				if (hasChanged) {
-					changes.add(DateTime.now());
-				}
-				if (changes.size() > 2) {
-					changes.remove(0);
-				}
+            } catch (Exception e) {
+                log.error(e);
+            }
+        }
 
-				Metric metric = new Metric(metricName, newValue, DateTime.now(), changes);
-	        	metricsDAO.registerMetric(metric);
+        private void processNextMessageFrom(BlockingConnection connection) {
+            try {
+                Message message = connection.receive();
+                byte[] payload = message.getPayload();
 
-				message.ack();
-				
-			} catch (Exception e) {
-				log.error(e);
-			}
-		}
-		
-	}
-	
+                String metricMessage = new String(payload, "UTF-8");
+                log.debug("Got metric message: " + metricMessage);
+                String[] fields = metricMessage.replaceAll("\r", "").replaceAll("\n", "").split(":");
+                String newValue = fields[1];
+
+                String metricName = fields[0];
+                Metric existing = metricsDAO.getByName(metricName);
+
+                String existingValue = existing != null ? existing.getLastValue() : null;
+
+                boolean hasChanged = !(newValue.equals(existingValue));
+
+                List<DateTime> changes = existing != null ? existing.getChanges() : Lists.newArrayList();
+                if (hasChanged) {
+                    changes.add(DateTime.now());
+                }
+                if (changes.size() > 2) {
+                    changes.remove(0);
+                }
+
+                Metric metric = new Metric(metricName, newValue, DateTime.now(), changes);
+                metricsDAO.registerMetric(metric);
+
+                message.ack();
+
+            } catch (Exception e) {
+                log.error(e);
+            }
+        }
+
+    }
+
 }
