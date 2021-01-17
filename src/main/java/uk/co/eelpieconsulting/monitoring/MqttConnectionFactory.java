@@ -9,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.net.URISyntaxException;
-
 @Component
 public class MqttConnectionFactory {
 
@@ -30,17 +28,19 @@ public class MqttConnectionFactory {
         this.metricsTopic = metricsTopic;
     }
 
-    public BlockingConnection subscribeToMetricsTopic() throws URISyntaxException, Exception {
+    public BlockingConnection subscribeToMetricsTopic() throws Exception {
         BlockingConnection connection = connectToMetricsHost();
         log.info("Subscribing to topic '" + metricsTopic + "' on host '" + metricsHost + "'");
         connection.subscribe(new Topic[]{new Topic(metricsTopic, QoS.AT_MOST_ONCE)});
         return connection;
     }
 
-    private BlockingConnection connectToMetricsHost() throws URISyntaxException, Exception {
+    private BlockingConnection connectToMetricsHost() throws Exception {
         log.info("Connecting to metrics host: " + metricsHost);
         MQTT mqtt = new MQTT();
         mqtt.setHost(metricsHost, metricsPort);
+        mqtt.setClientId("mqtt-exporter");
+
         BlockingConnection connection = mqtt.blockingConnection();
         connection.connect();
         return connection;
