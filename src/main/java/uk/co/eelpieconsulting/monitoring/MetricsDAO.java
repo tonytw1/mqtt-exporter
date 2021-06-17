@@ -19,7 +19,7 @@ public class MetricsDAO {
     public MetricsDAO() {
         this.metrics = CacheBuilder.newBuilder().
                 maximumSize(100000).
-                expireAfterWrite(1, TimeUnit.DAYS).
+                expireAfterWrite(90, TimeUnit.SECONDS).
                 build();
     }
 
