@@ -1,6 +1,5 @@
 package uk.co.eelpieconsulting.monitoring;
 
-import com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
 import org.fusesource.mqtt.client.BlockingConnection;
 import org.fusesource.mqtt.client.Message;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 import uk.co.eelpieconsulting.monitoring.model.Metric;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 @Component
 public class MetricsListener {
@@ -56,23 +54,8 @@ public class MetricsListener {
                 log.debug("Got metric message: " + metricMessage);
                 String[] fields = metricMessage.replaceAll("\r", "").replaceAll("\n", "").split(":");
                 String newValue = fields[1];
-
-                String metricName = fields[0];
-                Metric existing = metricsDAO.getByName(metricName);
-
-                String existingValue = existing != null ? existing.getLastValue() : null;
-
-                boolean hasChanged = !(newValue.equals(existingValue));
-
-                List<DateTime> changes = existing != null ? existing.getChanges() : Lists.newArrayList();
-                if (hasChanged) {
-                    changes.add(DateTime.now());
-                }
-                if (changes.size() > 2) {
-                    changes.remove(0);
-                }
-
-                Metric metric = new Metric(metricName, newValue, DateTime.now(), changes);
+                String metricName = fields[0];  // TODO clean here rather than in the controller
+                Metric metric = new Metric(metricName, newValue, DateTime.now());
                 metricsDAO.registerMetric(metric);
 
                 message.ack();

@@ -14,29 +14,21 @@ import com.google.common.collect.ImmutableSortedSet;
 @Component
 public class MetricsDAO {
 
-	private final Cache<String, Metric> metrics;
+    private final Cache<String, Metric> metrics;
 
-	public MetricsDAO() {
-		this.metrics = CacheBuilder.newBuilder().
-				maximumSize(100000).
-				expireAfterWrite(1, TimeUnit.DAYS).
-				build();		   
-	}
-	
-	public void registerMetric(Metric metric) {
-		metrics.put(metric.getName(), metric);
-	}
-	
-	public List<Metric> getMetrics() {
-		return ImmutableSortedSet.copyOf(metrics.asMap().values()).asList();
-	}
-	
-	public Metric getByName(String metricName) {
-		return metrics.getIfPresent(metricName);
-	}
+    public MetricsDAO() {
+        this.metrics = CacheBuilder.newBuilder().
+                maximumSize(100000).
+                expireAfterWrite(1, TimeUnit.DAYS).
+                build();
+    }
 
-	public boolean isKnownMetricName(String metricName) {
-		return metrics.getIfPresent(metricName) != null;
-	}
-	
+    public void registerMetric(Metric metric) {
+        metrics.put(metric.getName(), metric);
+    }
+
+    public List<Metric> getMetrics() {
+        return ImmutableSortedSet.copyOf(metrics.asMap().values()).asList();
+    }
+
 }

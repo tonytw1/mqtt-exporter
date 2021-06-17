@@ -32,7 +32,7 @@ public class MetricsController {
     for (Metric m : metrics) {
       try {
         Double.parseDouble(m.getLastValue());
-        cleaned.add(new Metric(makeSafeName(m), m.getLastValue(), m.getDate(), Lists.newArrayList()));
+        cleaned.add(new Metric(makeSafeName(m), m.getLastValue(), m.getDate()));
       } catch (Exception e) {
         // TODO
       }
