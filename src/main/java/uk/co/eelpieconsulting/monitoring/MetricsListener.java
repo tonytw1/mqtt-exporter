@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uk.co.eelpieconsulting.monitoring.model.Metric;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Component
@@ -51,7 +52,7 @@ public class MetricsListener {
                 Message message = connection.receive();
                 byte[] payload = message.getPayload();
 
-                String metricMessage = new String(payload, "UTF-8");
+                String metricMessage = new String(payload, StandardCharsets.UTF_8);
                 log.debug("Got metric message: " + metricMessage);
                 String[] fields = metricMessage.replaceAll("\r", "").replaceAll("\n", "").split(":");
                 String newValue = fields[1];
